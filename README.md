@@ -2,11 +2,9 @@
 
 - This is website about CRUD Todo App. Website has some main functions: add task, update task, delete task,... 
 
-- Technology:
-
-+ Frontend: React Query, ReactJS, TailwindCSS, Antd.
+- Frontend: React Query, React, TailwindCSS, Antd, Typescript.
   
-+ Backend: JSON Server.
+- Backend: JSON Server.
 
 # Installation
 

@@ -31,7 +31,7 @@ export function updateTasks(updatedTask: TaskType): Promise<TaskType> {
 export function getTask(taskId?: number) {
   const url = `http://localhost:3000/todos/${taskId}`;
 
-  return axios.get<TaskType[]>(url).then((res) => res.data);
+  return axios.get<TaskType>(url).then((res) => res.data);
 }
 
 export function deleteTask(taskId?: number) {

@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply m-0 box-border p-0 font-lexend font-light;
+  }
+
+  /* Customize scroll bar */
+  * ::-webkit-scrollbar {
+    @apply w-4;
+  }
+
+  * ::-webkit-scrollbar-thumb {
+    @apply h-14 rounded-lg border-4 border-solid border-transparent bg-[rgba(96,96,96,0.5)] bg-clip-content;
+  }
+  * ::-webkit-scrollbar-thumb:hover {
+    @apply bg-[#606060];
+  }
+}
+
+.hidden-scroll {
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hidden-scroll::-webkit-scrollbar {
+  display: none;
+}

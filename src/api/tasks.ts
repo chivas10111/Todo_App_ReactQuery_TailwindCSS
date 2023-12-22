@@ -7,12 +7,20 @@ export type TaskType = {
   completed?: boolean;
 };
 
-export function getTasks(userId?: number) {
+export function getTasks(userId?: number, page?: number, limit?: number) {
   const url = userId
     ? `http://localhost:3000/users/${userId}/todos`
     : 'http://localhost:3000/todos';
 
-  return axios.get<TaskType[]>(url).then((res) => res.data);
+
+  return axios.get<TaskType[]>(url,{
+    params: {
+      _page: page,
+      _limit: limit
+    }
+  }).then((res) => {
+    return res.data
+  });
 }
 
 export function addTasks(newTask: TaskType): Promise<TaskType> {

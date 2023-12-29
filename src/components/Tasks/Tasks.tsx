@@ -232,17 +232,17 @@ export default Tasks;
 //khi thuc hien mot hanh dong nao do se khoi tao mot id
 //nếu mà hành động chậm hơn thời gian time out thì sẽ chạy hàm callback (hành động)
 //nếu mà hành động nhanh hơn thời gian time out thì sẽ cancel callback (hành động)
-const debounce2 = (callback: (param: any) => void, timeout: number)=> {
-  let timeoutId:number|null = null
+// const debounce2 = (callback: (param: any) => void, timeout: number)=> {
+//   let timeoutId:number|null = null
 
-  return (param: any) => {
-    if(timeoutId) {
-      clearTimeout(timeoutId) //cancel hanh dong truoc do
-    }
+//   return (param: any) => {
+//     if(timeoutId) {
+//       clearTimeout(timeoutId) //cancel hanh dong truoc do
+//     }
     
     
-    timeoutId = setTimeout(()=> {
-      callback(param)
-    }, timeout)
-  }
-}
+//     timeoutId = setTimeout(()=> {
+//       callback(param)
+//     }, timeout)
+//   }
+// }

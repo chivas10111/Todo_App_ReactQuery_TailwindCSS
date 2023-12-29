@@ -3,11 +3,13 @@ import { Select } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { getUsers } from '../../api/users';
 import { useSearchParams } from 'react-router-dom';
+import useSetParam from '../../shared/hooks/use-set-param';
 
 const { Option } = Select;
 
 const User: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const setParam = useSetParam();
+  const [searchParams, ] = useSearchParams();
   const currentUserId = searchParams.get("userId");
   const parseCurrentUserId = currentUserId ? parseInt(currentUserId, 10) : undefined;
 
@@ -19,7 +21,7 @@ const User: React.FC = () => {
 
   // Hàm lấy userId để cho component Task lấy được userId để hiển thị task của người đó
   const handleUserChange = (userId: number) => {
-    setSearchParams({ userId: userId.toString() });
+    setParam({'userId': userId.toString()});
   }
 
   // Xử lý các trường hợp khi không load được danh sách user

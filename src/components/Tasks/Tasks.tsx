@@ -1,9 +1,12 @@
-import { Button, Form, Input, Popconfirm, Table, message, Select, Space } from 'antd';
+import { Button, Form, Input, Popconfirm, Table, message, Select, Space, Radio } from 'antd';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { TaskType, addTasks, deleteTask, getTasks } from '../../api/tasks';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { queryClient } from '../../config/query-client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import useSetParam from '../../shared/hooks/use-set-param';
+import {debounce} from 'lodash';
+
 
 const { Option } = Select;
 const { Search } = Input;
@@ -11,20 +14,25 @@ const { Search } = Input;
 type FormType = { title: string };
 
 const Tasks = () => {
-  const [searchParams] = useSearchParams();
+  const setParam = useSetParam();
+  const [searchParams, ] = useSearchParams();
   const userId = searchParams.get('userId');
+  const completedParam = searchParams.get('completed') ?? undefined;
+  const completed = completedParam ? completedParam === 'true' : completedParam as undefined;
   const parsedUserId = userId ? parseInt(userId, 10) : undefined;
   const [form] = Form.useForm<FormType>();
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(10);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTasks, setFilteredTasks] = useState<TaskType[]>([]);
+  const pageParam = searchParams.get('page');
+  const page = pageParam ? parseInt(pageParam, 10) : 1;
+  const search = searchParams.get('search') ?? undefined;
+  const queryKey = ['tasks', parsedUserId, page, limit, completed, search];
+
 
   // Hàm xử lý get tasks
   const tasksQuery = useQuery({
-    queryKey: ['tasks', parsedUserId, currentPage, limit],
-    queryFn: () => getTasks(parsedUserId, currentPage, limit),
+    queryKey: queryKey,
+    queryFn: () => getTasks(parsedUserId, { page, limit, completed, search_query:search}),
     enabled: Boolean(parsedUserId),
   });
 
@@ -34,7 +42,7 @@ const Tasks = () => {
     onSuccess: () => {
       message.success('Thêm công việc thành công');
       queryClient.invalidateQueries({
-        queryKey: ['tasks', parsedUserId, currentPage, limit],
+        queryKey: queryKey,
         type: 'all',
       });
     },
@@ -46,27 +54,13 @@ const Tasks = () => {
     onSuccess: () => {
       message.success('Xóa công việc thành công');
       queryClient.invalidateQueries({
-        queryKey: ['tasks', parsedUserId, currentPage, limit],
+        queryKey: queryKey,
         type: 'all',
       });
     },
   });
 
-  // Xử lý khi chuyển user thì reset về trang 1
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [parsedUserId])
-
   const tasks = tasksQuery.data || [];
-  const sortedTasks = tasks.sort((a, b) => {
-    if (!a.completed && b.completed) {
-      return -1;
-    }
-    if (a.completed && !b.completed) {
-      return 1;
-    }
-    return 0;
-  });
 
   // Hàm xử lý khi click nút add trong form
   const onFinish = (values: FormType) => {
@@ -101,11 +95,6 @@ const Tasks = () => {
       title: 'Status',
       dataIndex: 'completed',
       key: 'completed',
-      filters: [
-        { text: 'Done', value: true },
-        { text: 'Not done', value: false },
-      ],
-      onFilter: (value: any, record: TaskType) => record.completed === value,  // Xử lý filter Done/Not done
       render: (completed: any) => (completed ? 'Done' : 'Not done'),
     },
     {
@@ -127,35 +116,37 @@ const Tasks = () => {
 
   // Xử lý khi bấm nút Prev
   const handlePrevClick = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    if (page > 1) {
+      setParam({
+        'page': page - 1
+      });
     }
   };
 
   // Xử lý khi bấm nút Next
   const handleNextClick = () => {
     if (tasks.length === limit) {
-      setCurrentPage(currentPage + 1);
+      setParam({
+        'page': page + 1
+      });
     }
   };
 
   // Xử lý khi thay đổi kích thước trang
   const handlePageSizeChange = (value: string) => {
     setLimit(Number(value));
-    setCurrentPage(1);
+    setParam({
+      'page': 1
+    });
   };
 
   // Xử lý search task
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value.toLowerCase();
-    setSearchQuery(query);
-
-    // Filter task theo title
-    const filteredTasks = tasks.filter(
-      (task) => task.title?.toLowerCase().includes(query)
-    );
-
-    setFilteredTasks(filteredTasks);
+    setParam({
+      'search': query||undefined,
+      'page': 1
+    });
   };
 
   // Xử lý các trường hợp khi không load được danh sách task và khi người dùng không chọn user thì không hiện task
@@ -195,20 +186,26 @@ const Tasks = () => {
       <Space className="space-search p-2">
         <Search
           placeholder="Search by title"
-          value={searchQuery}
-          onChange={handleSearch}
+          // value={search}
+           defaultValue={search}
+          onChange={debounce(handleSearch, 500)}
           style={{
             width: 600,
           }}
         />
       </Space>
-      <Table rowKey={getRowKey} columns={columns} dataSource={searchQuery ? filteredTasks : sortedTasks} className='border-2 border-solid' bordered pagination={false} />
+        <Radio.Group onChange={(e) => setParam({'completed': e.target.value})} defaultValue={completed}>
+          <Radio value={true}>Done</Radio>
+          <Radio value={false}>Not done</Radio>
+          <Radio value={undefined}>All</Radio>
+        </Radio.Group>
+      <Table rowKey={getRowKey} columns={columns} dataSource={tasks} className='border-2 border-solid' bordered pagination={false} />
       <div className='flex justify-between items-center mt-3'>
         <div className='flex justify-center items-center p-1.5'>
-          <Button onClick={handlePrevClick} disabled={currentPage === 1}>
+          <Button onClick={handlePrevClick} disabled={page === 1}>
             Prev
           </Button>
-          <p className='bg-blue-700 p-3 m-3'>{currentPage}</p>
+          <p className='bg-blue-700 p-3 m-3'>{page}</p>
           <Button onClick={handleNextClick} disabled={tasks.length < limit}>
             Next
           </Button>
@@ -229,3 +226,23 @@ const Tasks = () => {
 };
 
 export default Tasks;
+
+
+//Giai thich ham debounce
+//khi thuc hien mot hanh dong nao do se khoi tao mot id
+//nếu mà hành động chậm hơn thời gian time out thì sẽ chạy hàm callback (hành động)
+//nếu mà hành động nhanh hơn thời gian time out thì sẽ cancel callback (hành động)
+const debounce2 = (callback: (param: any) => void, timeout: number)=> {
+  let timeoutId:number|null = null
+
+  return (param: any) => {
+    if(timeoutId) {
+      clearTimeout(timeoutId) //cancel hanh dong truoc do
+    }
+    
+    
+    timeoutId = setTimeout(()=> {
+      callback(param)
+    }, timeout)
+  }
+}

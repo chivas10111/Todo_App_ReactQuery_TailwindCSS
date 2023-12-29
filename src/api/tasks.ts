@@ -7,16 +7,19 @@ export type TaskType = {
   completed?: boolean;
 };
 
-export function getTasks(userId?: number, page?: number, limit?: number) {
+export function getTasks(userId?: number, options?: {page?: number, limit?: number, completed?:boolean, search_query?:string}) {
   const url = userId
     ? `http://localhost:3000/users/${userId}/todos`
     : 'http://localhost:3000/todos';
 
-
   return axios.get<TaskType[]>(url,{
     params: {
-      _page: page,
-      _limit: limit
+      _page: options?.page,
+      _limit: options?.limit,
+      completed: options?.completed,
+      title_like: options?.search_query,
+      _sort: 'completed,title',
+      _order: 'asc,asc',
     }
   }).then((res) => {
     return res.data
@@ -49,6 +52,7 @@ export function deleteTask(taskId?: number) {
     console.log(`Task with ID ${taskId} deleted successfully`);
   });
 }
+
 
 
 
